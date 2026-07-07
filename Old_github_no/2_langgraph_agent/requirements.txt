@@ -1,0 +1,7 @@
+# Billy MVP — Task 2 (LangGraph Agent) Dependencies
+# Pin to tested versions; install with: pip install -r requirements.txt
+
+langgraph==1.2.8
+langchain-core==1.4.8
+langchain-ollama==1.1.0
+pandas==2.2.3

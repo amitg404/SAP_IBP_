@@ -1,0 +1,61 @@
+supplier_id,supplier_name,region,category,reliability_rating,avg_lead_time_days,min_order_qty,unit_cost_usd,active,contract_expiry,on_time_delivery_pct,defect_rate_pct
+SUP-001,Apex Manufacturing,North America,Electronics,B+,52,250,8.77,True,2026-04-01,91.2,2.96
+SUP-001,Apex Manufacturing,North America,Raw Materials,B,12,100,26.45,True,2028-05-01,88.2,1.42
+SUP-001,Apex Manufacturing,North America,Packaging,A+,8,500,43.16,False,2029-01-01,95.7,1.79
+SUP-001,Apex Manufacturing,North America,Chemicals,A+,19,250,20.83,False,2026-11-01,80.4,2.48
+SUP-001,Apex Manufacturing,North America,Machinery,B+,6,500,46.37,True,2027-01-01,81.4,3.75
+SUP-001,Apex Manufacturing,North America,Consumables,B,60,1000,39.78,True,2026-09-01,82.7,3.27
+SUP-002,Euro Components GmbH,Europe,Electronics,B+,59,1000,22.92,True,2027-07-01,84.9,4.47
+SUP-002,Euro Components GmbH,Europe,Raw Materials,A,13,100,16.19,True,2026-04-01,93.2,1.4
+SUP-002,Euro Components GmbH,Europe,Packaging,C,30,100,31.93,True,2028-11-01,78.9,2.97
+SUP-002,Euro Components GmbH,Europe,Chemicals,C,5,100,17.42,True,2028-03-01,84.2,0.18
+SUP-002,Euro Components GmbH,Europe,Machinery,A+,34,100,48.4,False,2027-07-01,73.6,4.23
+SUP-002,Euro Components GmbH,Europe,Consumables,B+,44,500,47.8,False,2027-05-01,93.1,1.32
+SUP-003,Pacific Parts Co.,Asia Pacific,Electronics,B,13,250,32.63,True,2026-04-01,75.1,0.27
+SUP-003,Pacific Parts Co.,Asia Pacific,Raw Materials,C,60,1000,30.25,True,2027-01-01,98.2,4.46
+SUP-003,Pacific Parts Co.,Asia Pacific,Packaging,B+,6,500,28.4,True,2027-06-01,75.0,2.33
+SUP-003,Pacific Parts Co.,Asia Pacific,Chemicals,A+,37,100,14.14,True,2028-11-01,83.4,2.92
+SUP-003,Pacific Parts Co.,Asia Pacific,Machinery,B+,14,100,18.35,True,2028-07-01,96.7,1.75
+SUP-003,Pacific Parts Co.,Asia Pacific,Consumables,B+,44,100,10.53,True,2028-03-01,97.1,0.21
+SUP-004,Sahara Supplies,Middle East & Africa,Electronics,C,18,500,27.01,True,2027-07-01,94.8,0.24
+SUP-004,Sahara Supplies,Middle East & Africa,Raw Materials,A,29,100,47.89,True,2029-09-01,92.2,3.83
+SUP-004,Sahara Supplies,Middle East & Africa,Packaging,C,56,100,31.53,False,2028-05-01,77.4,2.63
+SUP-004,Sahara Supplies,Middle East & Africa,Chemicals,A,26,250,40.55,True,2027-08-01,80.7,4.38
+SUP-004,Sahara Supplies,Middle East & Africa,Machinery,A,33,1000,20.01,True,2026-06-01,90.0,2.76
+SUP-004,Sahara Supplies,Middle East & Africa,Consumables,B,55,1000,13.8,True,2027-07-01,90.5,3.03
+SUP-005,AmeriGoods SA,Latin America,Electronics,C,21,500,19.05,True,2026-07-01,83.6,4.43
+SUP-005,AmeriGoods SA,Latin America,Raw Materials,C,36,250,45.29,False,2026-03-01,75.3,1.26
+SUP-005,AmeriGoods SA,Latin America,Packaging,C,50,1000,37.91,True,2026-07-01,72.7,0.83
+SUP-005,AmeriGoods SA,Latin America,Chemicals,A+,13,1000,45.5,True,2027-07-01,91.2,1.16
+SUP-005,AmeriGoods SA,Latin America,Machinery,B+,12,500,45.18,True,2026-12-01,73.2,3.35
+SUP-005,AmeriGoods SA,Latin America,Consumables,B+,33,1000,32.65,False,2028-08-01,91.3,3.33
+SUP-006,Nordic Industrial,Europe,Electronics,C,57,100,10.16,True,2028-11-01,89.9,1.77
+SUP-006,Nordic Industrial,Europe,Raw Materials,B,16,500,47.4,True,2027-05-01,85.6,0.31
+SUP-006,Nordic Industrial,Europe,Packaging,C,38,1000,16.41,False,2028-03-01,98.2,0.28
+SUP-006,Nordic Industrial,Europe,Chemicals,A,32,500,30.03,True,2026-06-01,79.8,0.62
+SUP-006,Nordic Industrial,Europe,Machinery,B+,36,1000,13.51,True,2028-05-01,99.2,3.42
+SUP-006,Nordic Industrial,Europe,Consumables,A,47,500,9.63,True,2027-01-01,88.5,0.27
+SUP-007,Eastgate Logistics,Asia Pacific,Electronics,C,39,250,3.31,True,2028-04-01,79.8,4.27
+SUP-007,Eastgate Logistics,Asia Pacific,Raw Materials,B,51,1000,27.48,False,2028-02-01,91.7,4.14
+SUP-007,Eastgate Logistics,Asia Pacific,Packaging,A+,33,1000,26.18,True,2027-05-01,92.1,0.61
+SUP-007,Eastgate Logistics,Asia Pacific,Chemicals,B+,56,100,37.98,True,2026-06-01,76.3,1.58
+SUP-007,Eastgate Logistics,Asia Pacific,Machinery,B,45,100,36.22,True,2026-07-01,74.8,3.2
+SUP-007,Eastgate Logistics,Asia Pacific,Consumables,C,25,250,42.55,True,2026-04-01,75.8,1.76
+SUP-008,Atlas Distribution,North America,Electronics,A,48,250,15.47,True,2029-03-01,92.2,1.34
+SUP-008,Atlas Distribution,North America,Raw Materials,A,45,100,47.69,True,2026-07-01,73.8,2.55
+SUP-008,Atlas Distribution,North America,Packaging,A,50,250,4.82,True,2029-11-01,88.1,2.91
+SUP-008,Atlas Distribution,North America,Chemicals,B,38,250,44.26,True,2028-11-01,85.3,3.61
+SUP-008,Atlas Distribution,North America,Machinery,B,43,500,28.54,True,2026-04-01,75.1,3.98
+SUP-008,Atlas Distribution,North America,Consumables,B+,31,1000,18.29,False,2026-03-01,84.8,1.5
+SUP-009,Delta Components,Europe,Electronics,A+,27,1000,36.13,False,2029-10-01,83.3,1.13
+SUP-009,Delta Components,Europe,Raw Materials,B+,22,250,44.82,False,2026-09-01,93.2,1.25
+SUP-009,Delta Components,Europe,Packaging,B+,31,1000,41.02,False,2029-05-01,97.1,1.28
+SUP-009,Delta Components,Europe,Chemicals,A,26,100,17.5,False,2027-10-01,96.1,2.46
+SUP-009,Delta Components,Europe,Machinery,A+,44,500,9.07,True,2026-07-01,74.5,3.2
+SUP-009,Delta Components,Europe,Consumables,B+,54,100,33.78,True,2028-09-01,77.5,0.79
+SUP-010,Pacific Rim Trading,Asia Pacific,Electronics,C,30,250,16.64,True,2028-06-01,83.4,2.53
+SUP-010,Pacific Rim Trading,Asia Pacific,Raw Materials,A,5,100,42.74,True,2029-08-01,73.2,1.35
+SUP-010,Pacific Rim Trading,Asia Pacific,Packaging,A+,19,250,4.59,True,2029-11-01,83.0,3.7
+SUP-010,Pacific Rim Trading,Asia Pacific,Chemicals,B+,60,100,6.6,False,2026-01-01,92.4,2.48
+SUP-010,Pacific Rim Trading,Asia Pacific,Machinery,A,11,1000,12.13,True,2028-07-01,86.1,0.2
+SUP-010,Pacific Rim Trading,Asia Pacific,Consumables,B+,34,250,7.68,False,2029-05-01,83.8,1.08

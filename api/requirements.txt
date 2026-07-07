@@ -1,0 +1,18 @@
+# Billy MVP — Backend Dependencies
+# Install: pip install -r requirements.txt
+
+# Web framework
+fastapi==0.115.12
+uvicorn[standard]>=0.23
+pydantic>=2.0
+
+# AI orchestration
+langgraph==1.2.8
+langchain-core==1.4.8
+langchain-ollama==1.1.0
+
+# Data
+pandas==2.2.3
+
+# Config
+python-dotenv>=1.0

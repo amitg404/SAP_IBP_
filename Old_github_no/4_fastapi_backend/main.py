@@ -1,16 +1,16 @@
 """
-Billy MVP — Backend (Monorepo)
-Unified backend: FastAPI + LangGraph + Guardrails + Mock Data
+Billy MVP — FastAPI REST Boundary
+Task 4: POST /chat endpoint wrapping the LangGraph agent
 
-All source files live in this single `backend/` directory:
-  main.py       — FastAPI app  (POST /chat, GET /health)
-  agent.py      — LangGraph StateGraph + get_inventory tool
-  prompts.py    — System prompt + pre-flight scope guard
-  inventory.csv — Mock SAP IBP data (Task 1)
+Architecture:
+    React UI  →  POST /chat  →  LangGraph graph  →  Ollama (Gemma 4)
+                                     ↕
+                              get_inventory tool
+                                     ↕
+                              inventory.csv (Task 1)
 
-Run:
-  cd backend
-  uvicorn main:app --reload --host 0.0.0.0 --port 8000
+Run with:
+    uvicorn main:app --reload --host 0.0.0.0 --port 8000
 """
 
 import asyncio
@@ -20,9 +20,12 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-# ── All sibling modules are in the same directory ────────────────────────────
-_BACKEND_DIR = Path(__file__).parent
-sys.path.insert(0, str(_BACKEND_DIR))
+# ── sys.path wiring ───────────────────────────────────────────────────────────
+# All source folders sit at the SAP_IBP root. Insert them so local imports work
+# regardless of where uvicorn is launched from.
+_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(_ROOT / "2_langgraph_agent"))
+sys.path.insert(0, str(_ROOT / "3_llm_guardrails"))
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,16 +38,15 @@ from prompts import OUT_OF_SCOPE_REPLY, is_out_of_scope
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s  %(levelname)-8s  %(name)s - %(message)s",
+    format="%(asctime)s  %(levelname)-8s  %(name)s — %(message)s",
     datefmt="%H:%M:%S",
 )
 log = logging.getLogger("billy.api")
 
-# ── Fallback messages ─────────────────────────────────────────────────────────
+# ── Fallback messages (shown to the React UI on failure) ──────────────────────
 _FALLBACK_OLLAMA_DOWN = (
     "I am currently unable to reach my language engine. "
-    "Please ensure the local Ollama server is running on port 11434 "
-    "and the model has been pulled (ollama pull gemma4:12b)."
+    "Please ensure the local Ollama server is running on port 11434."
 )
 _FALLBACK_DATA_ERROR = (
     "I couldn't find inventory data for that request. "
@@ -55,7 +57,8 @@ _FALLBACK_UNEXPECTED = (
     "Something went wrong on my end. Please try again in a moment."
 )
 
-# ── Lazy graph import ─────────────────────────────────────────────────────────
+
+# ── Lazy graph import (deferred so startup doesn't fail if Ollama is down) ────
 _graph = None
 
 
@@ -63,47 +66,50 @@ def _get_graph():
     """Import and cache the compiled LangGraph on first call."""
     global _graph  # noqa: PLW0603
     if _graph is None:
-        log.info("Loading LangGraph agent...")
-        from agent import graph  # noqa: PLC0415
+        log.info("Loading LangGraph agent…")
+        from agent import graph  # noqa: PLC0415  (intentional deferred import)
         _graph = graph
-        log.info("LangGraph agent loaded.")
+        log.info("LangGraph agent loaded ✓")
     return _graph
 
 
 # ── Lifespan: warm up graph at startup ───────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Pre-load the graph so the first real request isn't slow."""
+    """Pre-load the graph on server start so the first request isn't slow."""
     try:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, _get_graph)
     except Exception as exc:  # noqa: BLE001
-        log.warning("Graph pre-load skipped (Ollama may be down): %s", exc)
+        log.warning("Graph pre-load failed (Ollama may be down): %s", exc)
     yield
     log.info("Billy API shutting down.")
 
 
 # ── FastAPI app ───────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="Billy - SAP IBP Inventory Assistant API",
+    title="Billy — SAP IBP Inventory Assistant API",
     description=(
         "REST boundary for the Billy MVP. "
-        "Accepts natural-language inventory questions and returns "
-        "conversational, data-grounded answers via LangGraph + Gemma 4."
+        "Accepts natural-language inventory questions, "
+        "routes them through a LangGraph agent backed by a local Gemma 4 model, "
+        "and returns a human-readable conversational answer."
     ),
     version="1.0.0",
     lifespan=lifespan,
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
+# Allow the React dev server (Vite default :5173, CRA default :3000)
+# and any Vercel preview URL. Tighten to specific origins before production.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",    # CRA dev
-        "http://localhost:5173",    # Vite dev
+        "http://localhost:3000",   # Create-React-App dev server
+        "http://localhost:5173",   # Vite dev server
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
-        "https://*.vercel.app",     # Vercel preview/prod
+        "https://*.vercel.app",    # Vercel preview deployments
     ],
     allow_credentials=True,
     allow_methods=["POST", "GET", "OPTIONS"],
@@ -114,7 +120,8 @@ app.add_middleware(
 # ── Pydantic v2 Schemas ───────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     """Incoming payload from the React frontend."""
-    model_config = {"extra": "forbid"}
+
+    model_config = {"extra": "forbid"}  # reject unknown fields
 
     message: str = Field(
         ...,
@@ -126,30 +133,39 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    """Outgoing payload — clean string only, no LangGraph internals."""
-    response: str = Field(..., description="Human-readable answer from Billy.")
+    """Outgoing payload — clean string only, no internal LangGraph metadata."""
+
+    response: str = Field(
+        ...,
+        description="Human-readable answer from Billy.",
+    )
 
 
 class ErrorResponse(BaseModel):
-    """Structured error payload."""
+    """Structured error payload — always returned instead of raw 500."""
+
     response: str
     error_code: str
 
 
-# ── Helper: run blocking graph.invoke in thread pool ─────────────────────────
+# ── Helper: run blocking graph.invoke in a thread pool ───────────────────────
 async def _invoke_graph(user_message: str) -> str:
     """
-    Offloads synchronous graph.invoke() to thread pool so it does not
-    block FastAPI's async event loop during the ~5-30s Ollama inference.
+    Runs the synchronous LangGraph graph.invoke() in FastAPI's default
+    thread-pool executor so it does not block the async event loop.
+
+    Returns the final AIMessage content string.
     """
     graph = _get_graph()
 
-    def _blocking():
-        result = graph.invoke({"messages": [HumanMessage(content=user_message)]})
+    def _blocking_call():
+        result = graph.invoke(
+            {"messages": [HumanMessage(content=user_message)]}
+        )
         return result["messages"][-1].content
 
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _blocking)
+    return await loop.run_in_executor(None, _blocking_call)
 
 
 # ── POST /chat ────────────────────────────────────────────────────────────────
@@ -158,64 +174,72 @@ async def _invoke_graph(user_message: str) -> str:
     response_model=ChatResponse,
     summary="Ask Billy an inventory question",
     responses={
-        200: {"model": ChatResponse},
-        422: {"description": "Validation error"},
-        503: {"model": ErrorResponse, "description": "Engine unavailable"},
+        200: {"model": ChatResponse, "description": "Successful answer"},
+        422: {"description": "Validation error — bad request payload"},
+        503: {"model": ErrorResponse, "description": "Ollama engine unavailable"},
     },
 )
 async def chat(request: ChatRequest) -> ChatResponse:
     """
-    Flow:
-    1. Pre-flight scope check  -> instant refusal (0ms, no LLM cost)
-    2. Invoke LangGraph graph  -> LLM + tool call + synthesis
-    3. Return ChatResponse     -> {"response": "<conversational string>"}
+    Main endpoint. Flow:
 
-    All failure paths return structured JSON — never a raw 500.
+    1. Pre-flight scope check  →  instant refusal if out-of-scope
+    2. invoke LangGraph graph  →  LLM + tool call + synthesis
+    3. Return ChatResponse     →  {"response": "<conversational string>"}
+
+    All failure paths return a structured JSON response — never a raw 500.
     """
     user_message = request.message.strip()
     t0 = time.perf_counter()
     log.info("Received query: %r", user_message[:120])
 
-    # Layer 1: pre-flight scope check
+    # ── Layer 1: Pre-flight scope check (zero LLM cost) ──────────────────────
     if is_out_of_scope(user_message):
-        log.info("Pre-flight: out-of-scope rejected in %.1f ms",
+        log.info("Pre-flight: out-of-scope query rejected in %.1f ms",
                  (time.perf_counter() - t0) * 1000)
         return ChatResponse(response=OUT_OF_SCOPE_REPLY)
 
-    # Layer 2: LangGraph invocation with full error handling
+    # ── Layer 2: LangGraph invocation ─────────────────────────────────────────
     try:
         answer = await _invoke_graph(user_message)
-        log.info("Response generated in %.0f ms", (time.perf_counter() - t0) * 1000)
+        elapsed = (time.perf_counter() - t0) * 1000
+        log.info("Response generated in %.0f ms", elapsed)
         return ChatResponse(response=answer)
 
     except (ConnectionError, ConnectionRefusedError, OSError) as exc:
+        # Ollama server unreachable
         log.error("Ollama connection error: %s", exc)
         return ChatResponse(response=_FALLBACK_OLLAMA_DOWN)
 
     except TimeoutError as exc:
-        log.error("Request timed out: %s", exc)
+        log.error("Ollama request timed out: %s", exc)
         return ChatResponse(response=_FALLBACK_OLLAMA_DOWN)
 
     except ValueError as exc:
+        # Tool returned bad data / product not found leaked through
         log.warning("Data/value error: %s", exc)
         return ChatResponse(response=_FALLBACK_DATA_ERROR)
 
     except Exception as exc:  # noqa: BLE001
-        log.exception("Unexpected error: %s", exc)
+        # Catch-all — log full traceback, return polite message
+        log.exception("Unexpected error processing query: %s", exc)
         return ChatResponse(response=_FALLBACK_UNEXPECTED)
 
 
 # ── GET /health ───────────────────────────────────────────────────────────────
-@app.get("/health", summary="Liveness probe")
+@app.get("/health", summary="Health check")
 async def health():
-    """Lightweight health check — polled every 15s by the React frontend."""
+    """Lightweight liveness probe — used by React to detect if backend is up."""
     return {"status": "ok", "service": "Billy API", "version": "1.0.0"}
 
 
-# ── Global exception handler ──────────────────────────────────────────────────
+# ── Global exception handler (last-resort 500 guard) ─────────────────────────
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Last-resort catch — ensures React always receives valid JSON."""
+    """
+    Catches any unhandled exception that escapes the route handler.
+    Ensures the React frontend always receives valid JSON, never an empty 500.
+    """
     log.exception("Unhandled exception on %s: %s", request.url.path, exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -226,4 +250,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ── Dev entry point ───────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info",
+    )
