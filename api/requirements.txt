@@ -16,3 +16,8 @@ pandas==2.2.3
 
 # Config
 python-dotenv>=1.0
+# Supabase — persistent session memory
+supabase>=2.3.0
+
+# Added for multi-agent v2
+numpy>=1.26

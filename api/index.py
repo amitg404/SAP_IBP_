@@ -120,18 +120,24 @@ app.add_middleware(
 # ── Pydantic v2 Schemas ───────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     """Incoming payload from the React frontend."""
-    model_config = {"extra": "forbid"}
+    model_config = {"extra": "ignore"}  # allow extra fields for forward compat
 
     message: str = Field(
         ...,
         min_length=1,
         max_length=2000,
-        description="Natural-language inventory question from the planner.",
+        description="Natural-language supply chain question.",
         examples=["Has inventory gone up for Product A in the last 6 months?"],
     )
     session_id: str = Field(
         default_factory=lambda: str(uuid4()),
-        description="Session identifier for conversation memory. Auto-generated if omitted.",
+        description="Session identifier for conversation memory.",
+    )
+    # FIX 1: client owns persona state -- no server-side SESSION_PERSONA dict needed.
+    # Frontend sends back the active_persona it received in the last ChatResponse.
+    active_persona: str | None = Field(
+        default=None,
+        description="Active persona from prior response ('blake', 'chris', or None).",
     )
 
 
@@ -145,11 +151,14 @@ class ChartData(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    """Outgoing payload — text answer + optional chart data."""
-    response: str = Field(..., description="Human-readable answer from Billy.")
-    chart: ChartData | None = Field(
+    """Outgoing payload -- text answer + optional chart + persona metadata."""
+    response: str = Field(..., description="Human-readable answer.")
+    chart: ChartData | None = Field(default=None)
+    # FIX 1: stateless persona -- client stores this and echoes it next request.
+    persona: str = Field(default="router", description="Which persona answered.")
+    active_persona: str | None = Field(
         default=None,
-        description="Chart data for visual queries. Absent for text-only answers.",
+        description="Persona to route to on next request (None = start fresh).",
     )
 
 
@@ -307,7 +316,7 @@ async def _invoke_graph(user_message: str, session_id: str) -> tuple[str, ChartD
     Seeds graph with session history for conversation memory.
     Returns (answer_text, chart_or_None).
     """
-    from agent import get_session_history, append_to_session  # noqa: PLC0415
+    from memory import get_session_history, append_to_session  # noqa: PLC0415
     graph = _get_graph()
 
     def _blocking():
@@ -362,9 +371,19 @@ async def api_chat(request: ChatRequest) -> ChatResponse:
 
     # Layer 2: LangGraph invocation with full error handling
     try:
-        answer, chart = await _invoke_graph(user_message, session_id)
-        log.info("Response generated in %.0f ms (chart=%s)", (time.perf_counter() - t0) * 1000, chart is not None)
-        return ChatResponse(response=answer, chart=chart)
+        answer, chart, who_answered, next_persona = await _invoke_graph(
+            user_message, session_id, request.active_persona
+        )
+        log.info(
+            "Response in %.0f ms (chart=%s, persona=%s)",
+            (time.perf_counter() - t0) * 1000, chart is not None, who_answered,
+        )
+        return ChatResponse(
+            response=answer,
+            chart=chart,
+            persona=who_answered,
+            active_persona=next_persona,
+        )
 
     except (ConnectionError, ConnectionRefusedError, OSError) as exc:
         log.error("Ollama connection error: %s", exc)
@@ -386,8 +405,8 @@ async def api_chat(request: ChatRequest) -> ChatResponse:
 # ── GET /api/health ───────────────────────────────────────────────────────────
 @app.get("/api/health", summary="Liveness probe")
 async def health():
-    """Lightweight health check — polled every 15s by the React frontend."""
-    return {"status": "ok", "service": "Billy API", "version": "1.0.0"}
+    from memory import backend_name  # noqa: PLC0415
+    return {"status": "ok", "service": "Billy API", "version": "2.0.0", "memory": backend_name()}
 
 
 # ── Global exception handler ──────────────────────────────────────────────────
