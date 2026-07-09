@@ -815,6 +815,21 @@ def handle_escalation(state: AgentState) -> AgentState:
             "active_persona": None,
             "escalation_count": 0,
         }
+    
+    # The last message was an AIMessage with a tool call to escalate_to_router.
+    # We MUST append a ToolMessage to close the tool call, otherwise the LLM API
+    # will hang or throw an error when the next persona tries to generate a response
+    # with a dangling tool call in its history.
+    last = state["messages"][-1]
+    if isinstance(last, AIMessage) and getattr(last, "tool_calls", None):
+        tool_call_id = last.tool_calls[0]["id"]
+        tool_msg = ToolMessage(
+            content=json.dumps({"status": "Escalated to router. Other persona will handle."}),
+            name="escalate_to_router",
+            tool_call_id=tool_call_id,
+        )
+        return {"messages": [tool_msg], "active_persona": None, "escalation_count": count}
+        
     return {"active_persona": None, "escalation_count": count}
 
 
