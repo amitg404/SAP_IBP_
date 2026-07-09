@@ -1,14 +1,15 @@
 // ChatContainer — scrollable message history window
 // props: { messages, isLoading, onChipClick }
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
+import { Network } from 'lucide-react';
 
 const SUGGESTION_CHIPS = [
   'Show inventory trend for Product A',
-  'Is Product B running low in Europe?',
-  'Is Product C inventory stable?',
-  'Compare Product A across regions',
+  'Forecast demand for Product B',
+  'What if demand drops by 10%?',
+  'Compare Product C across regions',
 ];
 
 export default function ChatContainer({ messages, isLoading, onChipClick }) {
@@ -25,12 +26,12 @@ export default function ChatContainer({ messages, isLoading, onChipClick }) {
     <main className="chat-container" id="chat-window" role="log" aria-live="polite">
       {isEmpty && !isLoading ? (
         <div className="welcome">
-          <div className="welcome-icon" aria-hidden="true">📦</div>
-          <h2>Hello, I'm Billy</h2>
+          <div className="welcome-icon" aria-hidden="true"><Network color="#fff" size={32} strokeWidth={2} /></div>
+          <h2>SAP IBP Multi-Agent Hub</h2>
           <p>
-            Your AI-powered SAP IBP Inventory Assistant. Ask me anything about
-            stock levels or inventory trends — I'll get you an answer in seconds,
-            without opening SAP or Excel.
+            Your AI-powered Supply Chain Concierge. Ask me anything about
+            historical data or future demand forecasts — I'll route your request
+            to the right expert in our network.
           </p>
           <div className="welcome-chips" role="list" aria-label="Suggested questions">
             {SUGGESTION_CHIPS.map((chip) => (
@@ -55,6 +56,7 @@ export default function ChatContainer({ messages, isLoading, onChipClick }) {
               content={msg.content}
               chart={msg.chart}
               timestamp={msg.timestamp}
+              persona={msg.persona}
             />
           ))}
           {isLoading && <TypingIndicator />}

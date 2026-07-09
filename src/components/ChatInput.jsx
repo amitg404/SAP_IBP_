@@ -1,14 +1,6 @@
 // ChatInput — sticky textarea + send button
-// props: { value, onChange, onSend, disabled }
-import { useRef } from 'react';
-
-const SendIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 2L11 13" />
-    <path d="M22 2L15 22L11 13L2 9L22 2Z" />
-  </svg>
-);
+import React, { useRef } from 'react';
+import { Send, CornerDownLeft } from 'lucide-react';
 
 export default function ChatInput({ value, onChange, onSend, disabled }) {
   const textareaRef = useRef(null);
@@ -33,7 +25,7 @@ export default function ChatInput({ value, onChange, onSend, disabled }) {
 
   return (
     <div className="input-area">
-      <div className="input-row">
+      <div className="input-wrapper">
         <textarea
           id="billy-chat-input"
           ref={textareaRef}
@@ -43,7 +35,7 @@ export default function ChatInput({ value, onChange, onSend, disabled }) {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder={disabled ? 'Billy is thinking…' : 'Ask about inventory — e.g. "Show trend for Product A in Europe"'}
+          placeholder={disabled ? 'Processing request...' : 'Ask Blake for data, or Chris for forecasts...'}
           aria-label="Chat message input"
           autoComplete="off"
         />
@@ -55,11 +47,11 @@ export default function ChatInput({ value, onChange, onSend, disabled }) {
           aria-label="Send message"
           title="Send (Enter)"
         >
-          <SendIcon />
+          <Send size={18} strokeWidth={2.5} />
         </button>
       </div>
       <div className="input-footer">
-        Inventory queries only · Phase 1 MVP · Powered by Gemma 4 via Ollama
+        SAP IBP Multi-Agent Hub <CornerDownLeft size={10} style={{ margin: '0 4px', display: 'inline' }} /> Powered by Multi-LLM Architecture
       </div>
     </div>
   );
