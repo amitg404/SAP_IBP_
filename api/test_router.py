@@ -133,10 +133,10 @@ if __name__ == "__main__":
 
     if "--live" in sys.argv:
         from langchain_core.messages import HumanMessage, SystemMessage
-        from agent import _build_llm, ROUTER_SYSTEM_PROMPT, _parse_router_token  # noqa
+        from agent import _build_llm, ROUTER_SYSTEM_PROMPT, _parse_router_token, ROUTER_MODEL  # noqa
 
         def _live_router(msg: str) -> str:
-            llm = _build_llm(temperature=0.0)
+            llm = _build_llm(temperature=0.0, model_name=ROUTER_MODEL)
             resp = llm.invoke([
                 SystemMessage(content=ROUTER_SYSTEM_PROMPT),
                 HumanMessage(content=msg),

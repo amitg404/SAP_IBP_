@@ -310,37 +310,45 @@ def _extract_chart(messages: list) -> ChartData | None:
 
 
 # ── Helper: run blocking graph.invoke in thread pool ─────────────────────────
-async def _invoke_graph(user_message: str, session_id: str) -> tuple[str, ChartData | None]:
+async def _invoke_graph(
+    user_message: str,
+    session_id: str,
+    active_persona: str | None,
+) -> tuple[str, ChartData | None, str, str | None]:
     """
     Offloads synchronous graph.invoke() to thread pool.
     Seeds graph with session history for conversation memory.
-    Returns (answer_text, chart_or_None).
     """
     from memory import get_session_history, append_to_session  # noqa: PLC0415
     graph = _get_graph()
 
     def _blocking():
-        # Build message list: history + new human message
-        history  = get_session_history(session_id)
-        human    = HumanMessage(content=user_message)
-        seed     = history + [human]
+        history = get_session_history(session_id)
+        human   = HumanMessage(content=user_message)
+        seed    = history + [human]
 
-        log.info("Session %s — history=%d messages", session_id[:8], len(history))
+        log.info(
+            "Session %s — history=%d msgs, persona=%s",
+            session_id[:8], len(history), active_persona,
+        )
 
-        result   = graph.invoke({"messages": seed})
+        result   = graph.invoke({
+            "messages":         seed,
+            "active_persona":   active_persona,
+            "session_id":       session_id,
+            "escalation_count": 0,
+        })
         messages = result["messages"]
 
-        # Final AI answer is always the last message
         answer_msg = messages[-1]
         answer     = answer_msg.content if hasattr(answer_msg, "content") else str(answer_msg)
+        chart      = _extract_chart(messages)
 
-        # Extract chart from tool messages in this invocation
-        chart = _extract_chart(messages)
+        next_persona = result.get("active_persona")
+        who_answered = next_persona or "router"
 
-        # Persist turn for next request
         append_to_session(session_id, human, AIMessage(content=answer))
-
-        return answer, chart
+        return answer, chart, who_answered, next_persona
 
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _blocking)

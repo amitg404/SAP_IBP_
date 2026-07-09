@@ -76,6 +76,8 @@ from prompts import (  # noqa: E402
 # -- Model config -------------------------------------------------------------
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 MODEL_NAME      = os.getenv("BILLY_MODEL",     "qwen2.5:7b")
+CHRIS_MODEL     = os.getenv("CHRIS_MODEL",     "qwen2.5:7b")
+ROUTER_MODEL    = os.getenv("ROUTER_MODEL",    "qwen2.5:7b")
 OLLAMA_API_KEY  = os.getenv("OLLAMA_API_KEY",  "")
 
 # -- Session Memory -- delegated to memory.py (Supabase or local fallback) ---
@@ -619,9 +621,9 @@ chris_tool_node = ToolNode(CHRIS_TOOLS)
 # LLM FACTORY
 # =============================================================================
 
-def _build_llm(tools=None, temperature: float = 0.1) -> ChatOllama:
+def _build_llm(tools=None, temperature: float = 0.1, model_name: str = MODEL_NAME) -> ChatOllama:
     llm = ChatOllama(
-        model=MODEL_NAME,
+        model=model_name,
         base_url=OLLAMA_BASE_URL,
         temperature=temperature,
         num_predict=512,
@@ -691,7 +693,7 @@ def call_router(state: AgentState) -> AgentState:
     FIX 5: HANDLE_DIRECTLY strictly for greetings/meta; ambiguous → CLARIFY_USER.
     """
     messages   = state["messages"]
-    llm        = _build_llm(temperature=0.0)  # deterministic, no tools
+    llm        = _build_llm(temperature=0.0, model_name=ROUTER_MODEL)  # deterministic, no tools
     last_human = next(
         (m for m in reversed(messages) if isinstance(m, HumanMessage)), messages[-1]
     )
@@ -775,7 +777,7 @@ def call_chris(state: AgentState) -> AgentState:
         m for m in state["messages"]
         if isinstance(m, (HumanMessage, AIMessage, ToolMessage))
     ]
-    llm      = _build_llm(tools=CHRIS_TOOLS)
+    llm      = _build_llm(tools=CHRIS_TOOLS, model_name=CHRIS_MODEL)
     response = llm.invoke(full_messages)
     return {"messages": [response]}
 
