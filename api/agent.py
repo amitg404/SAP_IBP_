@@ -75,9 +75,9 @@ from prompts import (  # noqa: E402
 
 # -- Model config -------------------------------------------------------------
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-MODEL_NAME      = os.getenv("BILLY_MODEL",     "qwen2.5:7b")
-CHRIS_MODEL     = os.getenv("CHRIS_MODEL",     "qwen2.5:7b")
-ROUTER_MODEL    = os.getenv("ROUTER_MODEL",    "qwen2.5:7b")
+MODEL_NAME      = os.getenv("BILLY_MODEL",     "gemma4:31b-cloud")
+CHRIS_MODEL     = os.getenv("CHRIS_MODEL",     "deepseek-v3.2:cloud")
+ROUTER_MODEL    = os.getenv("ROUTER_MODEL",    "nemotron-3-nano:30b-cloud")
 OLLAMA_API_KEY  = os.getenv("OLLAMA_API_KEY",  "")
 
 # -- Session Memory -- delegated to memory.py (Supabase or local fallback) ---

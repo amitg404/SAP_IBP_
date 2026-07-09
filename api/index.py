@@ -49,8 +49,7 @@ log = logging.getLogger("billy.api")
 # ── Fallback messages ─────────────────────────────────────────────────────────
 _FALLBACK_OLLAMA_DOWN = (
     "I am currently unable to reach my language engine. "
-    "Please ensure the local Ollama server is running on port 11434 "
-    "and the model has been pulled."
+    "Please ensure the cloud models are accessible and the API key is valid."
 )
 _FALLBACK_DATA_ERROR = (
     "I couldn't find inventory data for that request. "
